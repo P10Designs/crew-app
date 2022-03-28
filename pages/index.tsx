@@ -4,18 +4,25 @@ import 'dayjs/locale/es'
 import dayjs from 'dayjs'
 import { Calendar } from '@mantine/dates'
 import { getEvents } from '../firebase/clientApp'
-interface eventMenuInterface {
+import BoyIcon from '@mui/icons-material/Boy'
+interface eventInterface {
   date: {
     seconds: number,
     nanoseconds: number
   },
+  id: number,
   positions: [
     {
       name: string,
       special: boolean,
       assigned: string
     }
-  ]
+  ],
+  match:{
+    local: string,
+    visitor: string,
+    league: string
+  }
 }
 
 interface HomeProps{
@@ -25,14 +32,21 @@ interface HomeProps{
 const Home: NextPage<HomeProps> = (props) => {
   const [month, setMonth] = useState(new Date())
   const [thisMonthEvents, setThisMonthEvents] = useState<[Number]>()
-  const [events, setEvents] = useState<eventMenuInterface[]>()
+  const [events, setEvents] = useState<eventInterface[]>()
   const [menu, setMenu] = useState('calendar')
-  const [selected, setSelected] = useState(new Date())
+  const [selectedDay, setSelectedDay] = useState(new Date())
+  const [selectedEvent, setSelectedEvent] = useState<eventInterface>()
 
   useEffect(() => {
     if (events === undefined) {
-      setEvents(JSON.parse(props.events))
+      let e = JSON.parse(props.events)
+      e = e.map((e:any, i:number) => ({
+        ...e,
+        id: i
+      }))
+      setEvents(e)
     }
+    console.log(events)
     if (events !== undefined) handleMonthEvents()
   }, [events, month])
 
@@ -48,12 +62,28 @@ const Home: NextPage<HomeProps> = (props) => {
     setThisMonthEvents(array)
   }
 
+  const selectEvent = (id:number) => {
+    if (events === undefined) return
+    for (let i = 0; i < events.length; i++) {
+      if (events[i].id === id) {
+        setSelectedEvent(events[i])
+      }
+    }
+    setMenu('event')
+  }
+
   const dayClick = (e:Date) => {
     if (thisMonthEvents?.includes(e.getDate())) {
-      setSelected(e)
+      setSelectedDay(e)
       setMenu('dayList')
     }
   }
+
+  const genHour = (e:number) => {
+    const date = new Date(e * 1000)
+    return `${date.getHours() < 10 ? '0' + date.getHours() : date.getHours()}:${date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes()}`
+  }
+
   return (
         <div className='w-full flex flex-col items-center justify-center bg-gray-500 h-min'>
           <div className='font-bold text-5xl mb-7'>CREW APP</div>
@@ -98,17 +128,51 @@ const Home: NextPage<HomeProps> = (props) => {
             </>
           }
           {menu === 'dayList' &&
-            <div className='flex flex-col itemc-center justify-center'>
-              <button onClick={() => { setMenu('calendar') }}>CLOSE</button>
+            <div className='flex flex-col items-center justify-center'>
+              <div className='inline-flex items-center justify-between transition-all border-t border-r border-l border-black rounded-t p-3 w-full'>
+                      <div className='mx-2'>HORA</div>
+                      <div className='mx-2'>PARTIDO</div>
+                      <div className='mx-2'>LIGA</div>
+                      <div className='mx-2 inline-flex items-center justify-center'><BoyIcon />P</div>
+              </div>
               {events !== undefined && events.map((event, i) => {
-                if (new Date(event.date.seconds * 1000).getDate() !== selected.getDate()) return (<></>)
+                if (new Date(event.date.seconds * 1000).getDate() !== selectedDay.getDate()) return (<></>)
                 return (
-                    <div>
-                      {event.date.seconds}
-                    </div>
+                  <button
+                    key={'match_list' + i}
+                    onClick={() => { selectEvent(event.id) }}
+                    className={'inline-flex items-center justify-center hover:bg-gray-700/70 transition-all border border-black p-3'}
+                  >
+                      <div className='mx-2'>{genHour(event.date.seconds)}</div>
+                      <div className='mx-2'>{event.match.local.toUpperCase()} vs. {event.match.visitor.toUpperCase()}</div>
+                      <div className='mx-2'>{event.match.league.toUpperCase()}</div>
+                      <div className='mx-2 inline-flex items-center justify-center'><BoyIcon />{event.positions.length}</div>
+                  </button>
                 )
               })
-              }
+            }
+            <button onClick={() => { setMenu('calendar') }} className='px-4 py-2 mt-5 rounded bg-blue-900 font-bold text-white transition-all hover:bg-blue-600 border border-black w-max'>CLOSE</button>
+            </div>
+          }
+          {menu === 'event' &&
+            <div className='flex flex-col items-center justify-center'>
+              {selectedEvent?.positions.map((pos, i) => {
+                if (pos.assigned === '') {
+                  return (
+                  <div>
+                    {pos.name}
+                  </div>
+                  )
+                } else {
+                  return (
+                    <div>
+                      {pos.name}
+                      {pos.assigned}
+                    </div>
+                  )
+                }
+              })}
+              <button onClick={() => { setMenu('dayList') }} className='px-4 py-2 mt-5 rounded bg-blue-900 font-bold text-white transition-all hover:bg-blue-600 border border-black w-max'>CLOSE</button>
             </div>
           }
         </div>

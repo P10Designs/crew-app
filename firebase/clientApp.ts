@@ -1,10 +1,9 @@
-import { getApp, getApps, initializeApp } from 'firebase/app'
+import { getApps, initializeApp } from 'firebase/app'
 
 import {
   getFirestore,
   collection,
-  getDocs,
-  connectFirestoreEmulator
+  getDocs
 } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -20,10 +19,6 @@ if (!getApps.length) {
   initializeApp(firebaseConfig)
 }
 export const db = getFirestore()
-
-if (!getApp.length) {
-  connectFirestoreEmulator(db, 'localhost', 8080)
-}
 
 export const getEvents = async () => {
   const eventsCol = collection(db, 'events')
