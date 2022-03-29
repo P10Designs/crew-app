@@ -24,7 +24,6 @@ const Home: NextPage<HomeProps> = (props) => {
   const router = useRouter()
   useEffect(() => {
     if (events === undefined) {
-      console.log('events', props.events)
       const e = JSON.parse(props.events)
       setEvents(e)
     }
@@ -234,7 +233,6 @@ const Home: NextPage<HomeProps> = (props) => {
 
 export const getServerSideProps: GetServerSideProps = async () => {
   const events = await getEvents()
-  console.log(JSON.stringify(events))
   return {
     props: {
       events: JSON.stringify(events)

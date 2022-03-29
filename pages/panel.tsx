@@ -128,7 +128,6 @@ const Home: NextPage<HomeProps> = (props) => {
     return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
   }
 
-  console.log(thisMonthEvents?.length)
   return (
     <div className='w-full flex flex-col items-center justify-start bg-gray-200 h-min'>
       <div className='font-bold text-white px-10 w-full bg-blue-600 h-14 inline-flex justify-between items-center mb-10'>
@@ -293,7 +292,6 @@ const Home: NextPage<HomeProps> = (props) => {
 
 export const getServerSideProps: GetServerSideProps = async () => {
   const events = await getEvents()
-  console.log(JSON.stringify(events))
   return {
     props: {
       events: JSON.stringify(events)
