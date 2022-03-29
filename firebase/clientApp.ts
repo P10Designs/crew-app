@@ -3,7 +3,10 @@ import { getApps, initializeApp } from 'firebase/app'
 import {
   getFirestore,
   collection,
-  getDocs
+  getDocs,
+  doc,
+  setDoc,
+  getDoc
 } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -23,7 +26,37 @@ export const db = getFirestore()
 export const getEvents = async () => {
   const eventsCol = collection(db, 'events')
   const eventSnap = await getDocs(eventsCol)
-  const eventList = eventSnap.docs.map(doc => doc.data())
-  console.log(eventList)
+  const eventList = eventSnap.docs.map(doc => { return { ...doc.data(), id: doc.id } })
   return eventList
+}
+
+export const update = async (id:string, name:string, pos:string) => {
+  if (name === undefined) return false
+  const eventRef = doc(db, 'events', id)
+  const eventSnap = await getDoc(eventRef)
+  if (eventSnap.exists()) {
+    const data = eventSnap.data()
+    for (let i = 0; i < data.positions.length; i++) {
+      if (data.positions[i].name === pos) {
+        data.positions[i].assigned = name
+      }
+    }
+    await setDoc(eventRef, data)
+    return true
+  } else {
+    return false
+  }
+}
+
+export const checkPass = async (pass:string) => {
+  if (pass === undefined) return false
+  const configRef = doc(db, 'config', 'pass')
+  const configSnap = await getDoc(configRef)
+  if (configSnap.exists()) {
+    const data = configSnap.data()
+    if (data.value === pass) return true
+    else return false
+  } else {
+    return false
+  }
 }

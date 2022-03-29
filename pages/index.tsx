@@ -3,31 +3,11 @@ import { useState, useEffect } from 'react'
 import 'dayjs/locale/es'
 import dayjs from 'dayjs'
 import { Calendar } from '@mantine/dates'
-import { getEvents } from '../firebase/clientApp'
+import { checkPass, getEvents, update } from '../firebase/clientApp'
 import BoyIcon from '@mui/icons-material/Boy'
-interface eventInterface {
-  date: {
-    seconds: number,
-    nanoseconds: number
-  },
-  id: number,
-  positions: [
-    {
-      name: string,
-      special: boolean,
-      assigned: string
-    }
-  ],
-  match:{
-    local: string,
-    visitor: string,
-    league: string
-  }
-}
-
-interface HomeProps{
-  events: string
-}
+import SendIcon from '@mui/icons-material/Send'
+import { useRouter } from 'next/router'
+import { eventInterface, HomeProps, specialInterface } from 'constants/interfaces'
 
 const Home: NextPage<HomeProps> = (props) => {
   const [month, setMonth] = useState(new Date())
@@ -36,18 +16,21 @@ const Home: NextPage<HomeProps> = (props) => {
   const [menu, setMenu] = useState('calendar')
   const [selectedDay, setSelectedDay] = useState(new Date())
   const [selectedEvent, setSelectedEvent] = useState<eventInterface>()
+  const [name, setName] = useState<string>()
+  const [passwordSee, setPasswordSee] = useState(false)
+  const [password, setPassword] = useState<string>('')
+  const [data, setData] = useState<specialInterface>()
 
+  const router = useRouter()
   useEffect(() => {
     if (events === undefined) {
-      let e = JSON.parse(props.events)
-      e = e.map((e:any, i:number) => ({
-        ...e,
-        id: i
-      }))
+      console.log('events', props.events)
+      const e = JSON.parse(props.events)
       setEvents(e)
     }
-    console.log(events)
-    if (events !== undefined) handleMonthEvents()
+    if (events !== undefined) {
+      handleMonthEvents()
+    }
   }, [events, month])
 
   const handleMonthEvents = () => {
@@ -62,7 +45,7 @@ const Home: NextPage<HomeProps> = (props) => {
     setThisMonthEvents(array)
   }
 
-  const selectEvent = (id:number) => {
+  const selectEvent = (id:string) => {
     if (events === undefined) return
     for (let i = 0; i < events.length; i++) {
       if (events[i].id === id) {
@@ -79,14 +62,68 @@ const Home: NextPage<HomeProps> = (props) => {
     }
   }
 
+  const passwordCheck = async () => {
+    if (password === '') return
+    const val = await checkPass(password)
+    if (!val) alert('Wrong password')
+    else {
+      setPasswordSee(false)
+      if (name !== undefined && name !== '' && data !== undefined) {
+        const res = await update(data.id, name, data.pos)
+        if (!res) {
+          alert('Error')
+        } else {
+          alert('Succes!')
+        }
+        router.reload()
+      } else {
+        alert('Error, introduzca un nombre')
+      }
+    }
+  }
+
+  const updateHandler = async (id:string, pos:string, special:boolean) => {
+    if (special) {
+      setPasswordSee(true)
+      setData({ id, pos })
+    } else {
+      if (name !== undefined && name !== '') {
+        const res = await update(id, name, pos)
+        if (!res) {
+          alert('Error')
+        } else {
+          alert('Succes!')
+        }
+        router.reload()
+      } else {
+        alert('Error, introduzca un nombre')
+      }
+    }
+  }
+
   const genHour = (e:number) => {
     const date = new Date(e * 1000)
     return `${date.getHours() < 10 ? '0' + date.getHours() : date.getHours()}:${date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes()}`
   }
 
   return (
-        <div className='w-full flex flex-col items-center justify-center bg-gray-500 h-min'>
-          <div className='font-bold text-5xl mb-7'>CREW APP</div>
+        <div className='w-full flex flex-col items-center justify-start bg-gray-500 h-min'>
+          <div className='font-bold text-5xl my-10'>CREW APP</div>
+          {passwordSee &&
+            <div className='w-full h-full absolute z-10 flex items-center justify-center bg-black/80'>
+              <div className='bg-gray-800 flex flex-col p-5 rounded-md'>
+                <span className='font-bold text-xl mb-3 text-white'>INTRODUCE PASSWORD</span>
+                <div className='inline-flex items-center justify-center'>
+                  <input type='password' onChange={(e) => { setPassword(e.currentTarget.value) }} className='rounded p-1.5' />
+                  <button
+                    onClick={() => { passwordCheck() }}
+                  >
+                    <SendIcon className='text-white ml-2 hover:text-gray-500 transition-all' />
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
           {menu === 'calendar' &&
             <>
               <div className='w-5/6 lg:w-1/2 '>
@@ -156,22 +193,38 @@ const Home: NextPage<HomeProps> = (props) => {
           }
           {menu === 'event' &&
             <div className='flex flex-col items-center justify-center'>
+              <div className='inline-flex items-center justify-between font-bold rounded-t p-2 border border-b-0 border-black w-full'>
+                <span>POSICIÓN</span>
+                <span>ASSIGNED</span>
+              </div>
               {selectedEvent?.positions.map((pos, i) => {
-                if (pos.assigned === '') {
+                if (pos.assigned !== '') {
                   return (
-                  <div>
-                    {pos.name}
+                  <div className={'inline-flex items-center justify-between p-2 border border-black w-full min-w-special' + (pos.special ? ' bg-yellow-600' : '')} key={'pos' + i}>
+                    <span className='mr-2 font-bold'>{pos.name}</span>
+                    <span>{pos.assigned}</span>
                   </div>
                   )
                 } else {
                   return (
-                    <div>
-                      {pos.name}
-                      {pos.assigned}
+                    <div className={'inline-flex items-center justify-between p-2 border border-black w-full min-w-special' + (pos.special ? ' bg-yellow-600' : '')} key={'pos' + i}>
+                      <span className='mr-2 font-bold'>{pos.name}</span>
+                      <div className='inline-flex items-center justify-end'>
+                        <input onChange={(e) => { setName(e.currentTarget.value) }} placeholder='Introduce tu nombre' className='rounded p-1 w-1/2 mr-1'/>
+                        <button
+                          onClick={() => { updateHandler(selectedEvent.id, pos.name, pos.special) }}
+                        >
+                          <SendIcon className='text-white hover:text-gray-600 transition-all cursor-pointer' />
+                        </button>
+                      </div>
                     </div>
                   )
                 }
               })}
+              <div className='inline-flex w-full items-center justify-start m-2'>
+                <span className='text-transparent bg-yellow-600 mr-2'>exc</span>
+                <span className='font-bold text-xs'>*Requires password</span>
+              </div>
               <button onClick={() => { setMenu('dayList') }} className='px-4 py-2 mt-5 rounded bg-blue-900 font-bold text-white transition-all hover:bg-blue-600 border border-black w-max'>CLOSE</button>
             </div>
           }
@@ -181,6 +234,7 @@ const Home: NextPage<HomeProps> = (props) => {
 
 export const getServerSideProps: GetServerSideProps = async () => {
   const events = await getEvents()
+  console.log(JSON.stringify(events))
   return {
     props: {
       events: JSON.stringify(events)
@@ -189,5 +243,3 @@ export const getServerSideProps: GetServerSideProps = async () => {
 }
 
 export default Home
-
-// TODO: open event list on click on day
