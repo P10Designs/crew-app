@@ -19,6 +19,16 @@ export interface eventInterface {
   }
 }
 
+export interface eventExport{
+  date: Date,
+  positions?: any[],
+  match:{
+    local: string,
+    visitor: string,
+    league: string
+  }
+}
+
 export interface specialInterface {
   id: string,
   pos: string,

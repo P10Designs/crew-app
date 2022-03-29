@@ -1,3 +1,4 @@
+import { eventExport } from 'constants/interfaces'
 import { getApps, initializeApp } from 'firebase/app'
 
 import {
@@ -6,7 +7,9 @@ import {
   getDocs,
   doc,
   setDoc,
-  getDoc
+  getDoc,
+  addDoc,
+  deleteDoc
 } from 'firebase/firestore'
 
 const firebaseConfig = {
@@ -59,4 +62,14 @@ export const checkPass = async (pass:string) => {
   } else {
     return false
   }
+}
+
+export const addEventFirebase = async (data:eventExport) => {
+  if (data === undefined) return
+  return addDoc(collection(db, 'events'), data)
+}
+
+export const deleteEvent = async (id: string) => {
+  if (id === null || id === '' || id === undefined) return
+  return deleteDoc(doc(db, 'events', id))
 }

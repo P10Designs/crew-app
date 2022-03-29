@@ -178,7 +178,7 @@ const Home: NextPage<HomeProps> = (props) => {
                   <button
                     key={'match_list' + i}
                     onClick={() => { selectEvent(event.id) }}
-                    className={'inline-flex items-center justify-center hover:bg-gray-700/70 transition-all border border-black p-3'}
+                    className={'inline-flex items-center w-full min-w-special justify-center hover:bg-gray-700/70 transition-all border border-black p-3'}
                   >
                       <div className='mx-2'>{genHour(event.date.seconds)}</div>
                       <div className='mx-2'>{event.match.local.toUpperCase()} vs. {event.match.visitor.toUpperCase()}</div>
@@ -225,7 +225,7 @@ const Home: NextPage<HomeProps> = (props) => {
                 <span className='text-transparent bg-yellow-600 mr-2'>exc</span>
                 <span className='font-bold text-xs'>*Requires password</span>
               </div>
-              <button onClick={() => { setMenu('dayList') }} className='px-4 py-2 mt-5 rounded bg-blue-900 font-bold text-white transition-all hover:bg-blue-600 border border-black w-max'>CLOSE</button>
+              <button onClick={() => { setMenu('dayList') }} className='px-4 py-2 mt-5 rounded bg-blue-900 fnt-bold text-white transition-all hover:bg-blue-600 border border-black w-max'>CLOSE</button>
             </div>
           }
         </div>
