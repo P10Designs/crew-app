@@ -15,11 +15,12 @@ import { useRouter } from 'next/router'
 const Home: NextPage<HomeProps> = (props) => {
   const [month, setMonth] = useState(new Date())
   const [thisMonthEvents, setThisMonthEvents] = useState<[Number]>()
-  const [events, setEvents] = useState<eventInterface[]>()
+  const [events, setEvents] = useState<eventInterface[] | any[]>()
   const [menu, setMenu] = useState('calendar')
   const [selectedDay, setSelectedDay] = useState(new Date())
   const [selectedEvent, setSelectedEvent] = useState<eventInterface>()
-
+  const [loggedIn, setLoggedIn] = useState(false)
+  const [reset, setReset] = useState(false)
   const router = useRouter()
 
   const form = useForm({
@@ -52,6 +53,16 @@ const Home: NextPage<HomeProps> = (props) => {
     </Group>
   ))
 
+  const logIn = () => {
+    const values = form.values
+    if (values.local === 'P10designs' && values.visitor === '1234') {
+      setLoggedIn(true)
+    } else {
+      setLoggedIn(false)
+      alert('ERROR, WRONG USERNAME/PASSWORD')
+    }
+  }
+
   useEffect(() => {
     if (events === undefined) {
       const e = JSON.parse(props.events)
@@ -59,10 +70,20 @@ const Home: NextPage<HomeProps> = (props) => {
       result.sort((a:eventInterface, b:eventInterface) => a.date.seconds - b.date.seconds)
       setEvents(result)
     }
+    if (reset) {
+      pepe()
+      setReset(false)
+    }
     if (events !== undefined) {
       handleMonthEvents()
     }
-  }, [events, month])
+    async function pepe () {
+      const e = await getEvents()
+      const result = e.filter((a:any) => new Date(a.date.seconds * 1000) >= new Date())
+      result.sort((a:any, b:any) => a.date.seconds - b.date.seconds)
+      setEvents(result)
+    }
+  }, [events, month, reset])
 
   const handleMonthEvents = () => {
     const array:[Number] = [0]
@@ -107,7 +128,8 @@ const Home: NextPage<HomeProps> = (props) => {
     }
 
     addEventFirebase(res).then((sep) => {
-      router.reload()
+      setReset(true)
+      setMenu('calendar')
     }).catch((err) => {
       alert(err)
     })
@@ -127,8 +149,8 @@ const Home: NextPage<HomeProps> = (props) => {
     const date = new Date(e * 1000)
     return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
   }
-
-  return (
+  if (loggedIn) {
+    return (
     <div className='w-full flex flex-col items-center justify-start bg-gray-200 h-min'>
       <div className='font-bold text-white px-10 w-full bg-blue-600 h-14 inline-flex justify-between items-center mb-10'>
         <span>PANEL DE CONTROL</span>
@@ -188,7 +210,8 @@ const Home: NextPage<HomeProps> = (props) => {
         </div>
       }
       {menu === 'calendar' &&
-        <div className='w-5/6 lg:w-1/2 '>
+        <div className='w-5/6 lg:w-1/2 flex flex-col items-center'>
+          <button onClick={() => { setMonth(new Date()) }} className='px-4 py-2 mb-5 rounded bg-blue-900 font-bold text-white transition-all hover:bg-blue-600 border border-black w-max'>HOY</button>
           <Calendar
             onChange={(e) => { dayClick(e) }}
             month={month}
@@ -287,6 +310,15 @@ const Home: NextPage<HomeProps> = (props) => {
         </div>
       }
   </div>
+    )
+  }
+  return (
+    <div className='flex flex-col items-center justify-center'>
+      <span className='my-5 font-bold text-3xl'>LOG IN</span>
+      <Input variant="filled" placeholder='Username' radius="md" size="xs" type={'text'} className='my-1.5' {...form.getInputProps('local')}/>
+      <Input variant="filled" placeholder='Password' radius="md" size="xs" type={'password'} className='my-1.5' {...form.getInputProps('visitor')}/>
+      <button onClick={() => { logIn() }} className='px-4 py-2 mt-5 rounded bg-blue-900 font-bold text-white transition-all hover:bg-blue-600 border border-black w-max mx-1.5'>LOG IN</button>
+    </div>
   )
 }
 

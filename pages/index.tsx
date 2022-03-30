@@ -125,7 +125,8 @@ const Home: NextPage<HomeProps> = (props) => {
           }
           {menu === 'calendar' &&
             <>
-              <div className='w-5/6 lg:w-1/2 '>
+              <div className='w-5/6 lg:w-1/2 flex flex-col items-center'>
+                <button onClick={() => { setMonth(new Date()) }} className='px-4 py-2 mb-5 rounded bg-blue-900 font-bold text-white transition-all hover:bg-blue-600 border border-black w-max'>HOY</button>
                 <Calendar
                   onChange={(e) => { dayClick(e) }}
                   month={month}
