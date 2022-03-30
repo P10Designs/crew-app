@@ -25,7 +25,9 @@ const Home: NextPage<HomeProps> = (props) => {
   useEffect(() => {
     if (events === undefined) {
       const e = JSON.parse(props.events)
-      setEvents(e)
+      const result = e.filter((a:eventInterface) => new Date(a.date.seconds * 1000) >= new Date())
+      result.sort((a:eventInterface, b:eventInterface) => a.date.seconds - b.date.seconds)
+      setEvents(result)
     }
     if (events !== undefined) {
       handleMonthEvents()
