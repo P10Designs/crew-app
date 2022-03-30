@@ -149,6 +149,7 @@ const Home: NextPage<HomeProps> = (props) => {
     const date = new Date(e * 1000)
     return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()}`
   }
+
   if (loggedIn) {
     return (
     <div className='w-full flex flex-col items-center justify-start bg-gray-200 h-min'>
@@ -292,7 +293,7 @@ const Home: NextPage<HomeProps> = (props) => {
             <div className='mx-2 inline-flex items-center justify-center'><BoyIcon />P</div>
           </div>
           {events !== undefined && events.map((event, i) => {
-            if (new Date(event.date.seconds * 1000).getMonth() !== month.getMonth()) return (<></>)
+            if (new Date(event.date.seconds * 1000).getMonth() !== month.getMonth()) return (<div key={'pepe' + i} className='hidden'></div>)
             return (
               <button
                 key={'match_list' + i}

@@ -8,3 +8,4 @@ TODO:
   [] - Share password button
   [] - Help button
   [] - Add number of positions remaining
+  [] - Export a excel
